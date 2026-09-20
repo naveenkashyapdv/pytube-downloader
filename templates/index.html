@@ -22,6 +22,7 @@
 <body>
     <div class="container">
         <h1>YouTube Video Downloader</h1>
+        <p>Download a video or an entire YouTube playlist.</p>
         <form method="post" action="{{ url_for('get_formats') }}">
             <input type="url" name="url" placeholder="Enter YouTube URL" value="{{ url or '' }}" required>
             <button type="submit">Get Formats</button>
@@ -29,17 +30,28 @@
         {% if formats %}
         <form method="post" action="{{ url_for('download_video') }}">
             <input type="hidden" name="url" value="{{ url }}">
+            <input type="hidden" name="is_playlist" value="{{ 'true' if is_playlist else 'false' }}">
             <label for="format_id">Select Quality:</label>
             <select id="format_id" name="format_id" required>
                 {% for format in formats %}
-                <option value="{{ format.format_id }}">{{ format.resolution }} - {{ format.ext }} ({{ format.size }})</option>
+                <option value="{{ format.format_id }}" data-download-type="{{ format.download_type }}">{{ format.resolution }} - {{ format.ext }} ({{ format.size }})</option>
                 {% endfor %}
             </select>
-            <button type="submit">Download Video</button>
+            <input type="hidden" id="download_type" name="download_type" value="video">
+            <button type="submit">{{ 'Download Playlist' if is_playlist else 'Download Video' }}</button>
         </form>
+        <script>
+            const formatSelect = document.getElementById('format_id');
+            const downloadType = document.getElementById('download_type');
+            const updateDownloadType = () => {
+                downloadType.value = formatSelect.options[formatSelect.selectedIndex].dataset.downloadType;
+            };
+            formatSelect.addEventListener('change', updateDownloadType);
+            updateDownloadType();
+        </script>
         {% endif %}
         <div class="message">
-            {% if success %}<p class="success">Video "{{ video_title }}" downloaded successfully!</p><a href="{{ url_for('download_file', filename=filename) }}">Click here to download</a>{% endif %}
+            {% if success %}<p class="success">{{ 'Playlist' if playlist else 'Video' }} "{{ video_title }}" downloaded successfully!</p><a href="{{ url_for('download_file', filename=filename) }}">Click here to download</a>{% endif %}
             {% if error %}<p class="error">Error: {{ error }}</p>{% endif %}
         </div>
     </div>
